@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Trading Journal — Performance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#191919; --bg-side:#202020; --bg-card:#252525; --bg-card-2:#2a2a2a;
+    --bg-hover:#2f2f2f; --line:rgba(255,255,255,0.07); --line-2:rgba(255,255,255,0.11);
+    --fg:#e8e8e6; --fg-2:#9b9a97; --fg-3:#6f6e69;
+    --green:oklch(0.74 0.16 145); --green-bg:oklch(0.30 0.07 145 / 0.45);
+    --red:oklch(0.68 0.20 25); --red-bg:oklch(0.32 0.10 25 / 0.45);
+    --amber:oklch(0.80 0.14 75); --amber-bg:oklch(0.34 0.07 75 / 0.45);
+    --blue:oklch(0.74 0.13 240); --blue-bg:oklch(0.32 0.07 240 / 0.45);
+    --purple:oklch(0.74 0.14 300); --purple-bg:oklch(0.32 0.07 300 / 0.45);
+    --pink:oklch(0.78 0.14 350); --pink-bg:oklch(0.34 0.08 350 / 0.45);
+    --gray-bg:rgba(255,255,255,0.06);
+    --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  ::selection{background:rgba(35,131,226,0.35)}
+
+  /* ========== COVER ========== */
+  .cover{height:200px;background:
+    linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%),
+    radial-gradient(ellipse at 20% 40%, oklch(0.45 0.16 145 / 0.55), transparent 55%),
+    radial-gradient(ellipse at 75% 60%, oklch(0.40 0.18 25 / 0.45), transparent 55%),
+    linear-gradient(125deg, #1a2620 0%, #1a1a1a 50%, #261a1a 100%);
+    position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .cover::before{content:"";position:absolute;inset:0;background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size:48px 48px;mix-blend-mode:overlay;opacity:0.6}
+  .cover-chart{position:absolute;inset:0;width:100%;height:100%;opacity:0.55}
+
+  .page{max-width:1180px;margin:0 auto;padding:0 56px 120px}
+  .icon-emoji{font-size:78px;line-height:1;margin-top:-58px;margin-bottom:6px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.4))}
+
+  h1.title{font-size:40px;font-weight:700;letter-spacing:-0.02em;margin:0 0 6px;line-height:1.15}
+  .meta{display:flex;flex-wrap:wrap;gap:0;font-size:14px;color:var(--fg-2);margin-bottom:18px}
+  .meta-row{display:grid;grid-template-columns:160px 1fr;gap:12px;padding:4px 0}
+  .meta-row .k{color:var(--fg-3);display:flex;align-items:center;gap:8px}
+  .meta-row .v{color:var(--fg)}
+  .pill{display:inline-flex;align-items:center;padding:1px 8px;border-radius:4px;font-size:13px;background:var(--gray-bg);color:var(--fg)}
+  .pill.green{background:var(--green-bg);color:var(--green)}
+  .pill.red{background:var(--red-bg);color:var(--red)}
+  .pill.amber{background:var(--amber-bg);color:var(--amber)}
+  .pill.blue{background:var(--blue-bg);color:var(--blue)}
+  .pill.purple{background:var(--purple-bg);color:var(--purple)}
+  .pill.pink{background:var(--pink-bg);color:var(--pink)}
+
+  hr.div{border:none;border-top:1px solid var(--line);margin:24px 0}
+
+  .callout{display:flex;gap:12px;padding:14px 16px;background:var(--bg-card);border-radius:6px;margin:8px 0}
+  .callout .em{font-size:18px;line-height:1.3;flex-shrink:0}
+  .callout .txt{font-size:14px;color:var(--fg)}
+
+  h2{font-size:24px;font-weight:700;letter-spacing:-0.01em;margin:32px 0 6px}
+  h3{font-size:18px;font-weight:600;margin:22px 0 4px}
+  p{margin:4px 0}
+
+  /* ========== STATS ========== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .stat{background:var(--bg-card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-height:120px}
+  .stat .lab{font-size:12px;color:var(--fg-2);text-transform:uppercase;letter-spacing:0.06em}
+  .stat .val{font-size:28px;font-weight:600;font-family:var(--font-mono);letter-spacing:-0.01em}
+  .stat .sub{font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:6px;margin-top:auto}
+  .val.green{color:var(--green)}
+  .val.red{color:var(--red)}
+  .val.amber{color:var(--amber)}
+  .delta{font-size:11px;font-family:var(--font-mono);padding:1px 6px;border-radius:3px}
+  .delta.up{background:var(--green-bg);color:var(--green)}
+  .delta.dn{background:var(--red-bg);color:var(--red)}
+  .spark{width:100%;height:32px;display:block}
+  .chart-grid line{stroke:rgba(255,255,255,0.06);stroke-width:1}
+
+  /* ========== ASSET CLASS ========== */
+  .asset-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:10px 0}
+  .asset{background:var(--bg-card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+  .asset .name{font-size:12px;color:var(--fg-2);display:flex;align-items:center;gap:6px}
+  .asset .pnl{font-family:var(--font-mono);font-size:18px;font-weight:600}
+  .asset .pnl.up{color:var(--green)}
+  .asset .pnl.dn{color:var(--red)}
+  .asset .pnl.neutral{color:var(--fg-3)}
+  .asset .bottom{font-size:11px;color:var(--fg-3);display:flex;justify-content:space-between;margin-top:4px}
+
+  /* ========== DATABASE / VIEWS ========== */
+  .db{margin-top:8px}
+  .db-tabs{display:flex;align-items:center;gap:2px;border-bottom:1px solid var(--line);height:36px;padding-right:8px}
+  .db-tab{padding:6px 8px;font-size:14px;color:var(--fg-2);border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;height:28px;margin-bottom:-1px}
+  .db-tab:hover{background:var(--bg-hover);color:var(--fg)}
+  .db-tab.cur{color:var(--fg);border-bottom:2px solid var(--fg);border-radius:0;padding-bottom:8px;margin-bottom:-1px}
+  .db-tab svg{width:14px;height:14px}
+  .db-tab .count{font-size:12px;color:var(--fg-3);margin-left:2px}
+  .db-actions{margin-left:auto;display:flex;align-items:center;gap:4px}
+  .db-btn{padding:4px 8px;border-radius:4px;color:var(--fg-2);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;height:26px}
+  .db-btn:hover{background:var(--bg-hover);color:var(--fg)}
+  .db-btn svg{width:14px;height:14px}
+  .db-new{background:#2383e2;color:#fff;border-radius:4px;display:flex;align-items:center;height:26px;font-size:13px;overflow:hidden}
+  .db-new .lbl{padding:0 10px;cursor:pointer}
+  .db-new .lbl:hover{background:#1a6dc7}
+
+  /* ========== CALENDAR ========== */
+  .cal-head{display:flex;align-items:center;gap:10px;padding:8px 4px;color:var(--fg-2);font-size:13px}
+  .cal-head .mtitle{font-size:18px;font-weight:600;color:var(--fg)}
+  .cal-head .nav{display:flex;gap:2px;margin-left:6px}
+  .cal-head .nav button{background:transparent;border:none;color:var(--fg-2);width:24px;height:24px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .cal-head .nav button:hover{background:var(--bg-hover);color:var(--fg)}
+  .cal-summary{margin-left:auto;display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:12px;color:var(--fg-2)}
+  .cal-summary .v{color:var(--fg)}
+  .cal-summary .v.green{color:var(--green)}
+  .cal-summary .v.red{color:var(--red)}
+
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--bg-card)}
+  .cal .dow{padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--fg-3);background:transparent;border-bottom:1px solid var(--line)}
+  .cal .day{min-height:96px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 8px;display:flex;flex-direction:column;gap:6px;position:relative;background:var(--bg-card)}
+  .cal .day:nth-child(7n+7){border-right:none}
+  .cal .day.out{background:transparent;color:var(--fg-3)}
+  .cal .day.today .num{background:#2383e2;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .cal .day .num{font-size:12px;color:var(--fg-2);font-weight:500}
+  .cal .day.win{background:linear-gradient(180deg, oklch(0.30 0.07 145 / 0.35), oklch(0.30 0.07 145 / 0.10))}
+  .cal .day.loss{background:linear-gradient(180deg, oklch(0.32 0.10 25 / 0.35), oklch(0.32 0.10 25 / 0.10))}
+  .cal .day.mixed{background:linear-gradient(180deg, oklch(0.34 0.07 75 / 0.35), oklch(0.34 0.07 75 / 0.10))}
+  .cal .pnl{font-family:var(--font-mono);font-size:13px;font-weight:600}
+  .cal .pnl.up{color:var(--green)}
+  .cal .pnl.dn{color:var(--red)}
+  .cal .meta-line{font-size:11px;color:var(--fg-2);display:flex;gap:6px;align-items:center;margin-top:auto}
+  .cal .tag-row{display:flex;flex-wrap:wrap;gap:3px}
+  .cal .mini-pill{font-size:10px;padding:0 5px;border-radius:3px;line-height:14px;font-weight:500}
+
+  /* ========== TWO COL ========== */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .panel{background:var(--bg-card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  .panel h4{margin:0 0 10px;font-size:13px;color:var(--fg-2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+
+  /* ========== RULES ========== */
+  .rule{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+  .rule:last-child{border-bottom:none}
+  .check{width:16px;height:16px;border:1.5px solid var(--fg-3);border-radius:3px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent}
+  .check.on{background:#2383e2;border-color:#2383e2}
+  .check.on::after{content:"";width:8px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg);margin-top:-2px}
+  .rule .txt{font-size:14px;color:var(--fg);line-height:1.4}
+
+  /* ========== SETUP ========== */
+  .setup{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .setup:last-child{border-bottom:none}
+  .setup .name{font-weight:500;flex:1}
+  .setup .stats-mini{font-family:var(--font-mono);font-size:12px;color:var(--fg-2);display:flex;gap:12px}
+  .setup .stats-mini b{color:var(--fg)}
+  .bar{height:4px;background:var(--gray-bg);border-radius:2px;overflow:hidden;width:80px}
+  .bar > i{display:block;height:100%;background:var(--green)}
+  .bar > i.red{background:var(--red)}
+
+  /* ========== RECENT ========== */
+  .recent{display:flex;flex-direction:column}
+  .recent .item{display:grid;grid-template-columns:74px 80px 1fr 80px 80px 24px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .recent .item:last-child{border-bottom:none}
+  .recent .date{color:var(--fg-2);font-family:var(--font-mono);font-size:12px}
+  .recent .tk{font-family:var(--font-mono);font-weight:600}
+  .recent .pn{font-family:var(--font-mono);text-align:right;font-weight:500}
+  .recent .pn.up{color:var(--green)}
+  .recent .pn.dn{color:var(--red)}
+  .recent .r{font-family:var(--font-mono);text-align:right;color:var(--fg-2);font-size:12px}
+
+</style>
+</head>
+<body>
+
+<!-- ============= COVER ============= -->
+<div class="cover">
+  <svg class="cover-chart" viewBox="0 0 1200 200" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="cg" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="oklch(0.68 0.20 25)" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="oklch(0.68 0.20 25)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,80 L150,82 L300,90 L450,78 L600,76 L750,90 L900,110 L1050,140 L1200,160 L1200,200 L0,200 Z" fill="url(#cg)"/>
+    <path d="M0,80 L150,82 L300,90 L450,78 L600,76 L750,90 L900,110 L1050,140 L1200,160" fill="none" stroke="oklch(0.68 0.20 25)" stroke-width="2"/>
+  </svg>
+</div>
+
+<!-- ============= PAGE ============= -->
+<div class="page">
+  <div class="icon-emoji">📈</div>
+  <h1 class="title">Trading Journal — May 2026</h1>
+
+  <div class="meta">
+    <div class="meta-row"><div class="k">📅 Period</div><div class="v">May 1 → May 31, 2026</div></div>
+    <div class="meta-row"><div class="k">📊 Status</div><div class="v"><span class="pill red">● Below Breakeven</span></div></div>
+    <div class="meta-row"><div class="k">🌐 Markets</div><div class="v"><span class="pill purple">Options</span> <span class="pill pink">Forex</span></div></div>
+    <div class="meta-row"><div class="k">⚡ Style</div><div class="v"><span class="pill amber">Day · Scalp</span></div></div>
+  </div>
+
+  <div class="callout">
+    <div class="em">💡</div>
+    <div class="txt">
+      <b>This month's focus →</b> Stop revenge-trading after stop-outs. Honor every stop without manual override. After 2 consecutive losses, session is OVER. Your edge exists — your discipline is the gap.
+    </div>
+  </div>
+
+  <!-- ============= STATS ============= -->
+  <h2>Performance</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="lab">Total P&L · MTD</div>
+      <div class="val red">−$25.39</div>
+      <svg class="spark" viewBox="0 0 120 32" preserveAspectRatio="none">
+        <path d="M0,8 L20,5 L40,10 L60,18 L80,22 L100,28 L120,30" fill="none" stroke="oklch(0.68 0.20 25)" stroke-width="1.5"/>
+      </svg>
+      <div class="sub"><span class="delta dn">▼ Net Loss</span> 5 trades</div>
+    </div>
+    <div class="stat">
+      <div class="lab">Win Rate</div>
+      <div class="val">20.0%</div>
+      <svg class="spark" viewBox="0 0 120 32" preserveAspectRatio="none">
+        <g class="chart-grid"><line x1="0" y1="16" x2="120" y2="16"/></g>
+        <path d="M0,16 L24,12 L48,18 L72,22 L96,24 L120,26" fill="none" stroke="#9b9a97" stroke-width="1.5"/>
+      </svg>
+      <div class="sub"><span class="delta dn">▼ Below threshold</span> 1W / 4L</div>
+    </div>
+    <div class="stat">
+      <div class="lab">Best Trade</div>
+      <div class="val green">+$41.00</div>
+      <div class="sub" style="font-family:var(--font-mono)"><b style="color:var(--fg)">SPY</b> · May 7 · <span style="color:var(--green)">+0.68R</span></div>
+      <div class="sub" style="margin-top:4px">Setup: <span class="pill purple" style="font-size:11px;padding:0 6px">Resistance Reject</span></div>
+    </div>
+    <div class="stat">
+      <div class="lab">Worst Trade</div>
+      <div class="val red">−$20.31</div>
+      <div class="sub" style="font-family:var(--font-mono)"><b style="color:var(--fg)">XAUUSD</b> · May 7 · <span style="color:var(--red)">−1.6R</span></div>
+      <div class="sub" style="margin-top:4px">Mistake: <span class="pill red" style="font-size:11px;padding:0 6px">Loss of control</span></div>
+    </div>
+  </div>
+
+  <!-- ============= ASSET CLASS ============= -->
+  <h2>By Asset Class</h2>
+  <div class="asset-grid">
+    <div class="asset">
+      <div class="name">📈 Options</div>
+      <div class="pnl up">+$41.00</div>
+      <div class="bottom"><span>1 trade</span><span style="color:var(--green)">100% WR</span></div>
+    </div>
+    <div class="asset">
+      <div class="name">💱 Forex</div>
+      <div class="pnl dn">−$66.39</div>
+      <div class="bottom"><span>4 trades</span><span style="color:var(--red)">0% WR</span></div>
+    </div>
+    <div class="asset">
+      <div class="name">📉 Stocks</div>
+      <div class="pnl neutral">$0.00</div>
+      <div class="bottom"><span>0 trades</span><span>—</span></div>
+    </div>
+    <div class="asset">
+      <div class="name">⚡ Futures</div>
+      <div class="pnl neutral">$0.00</div>
+      <div class="bottom"><span>0 trades</span><span>—</span></div>
+    </div>
+    <div class="asset">
+      <div class="name">🪙 Crypto</div>
+      <div class="pnl neutral">$0.00</div>
+      <div class="bottom"><span>0 trades</span><span>—</span></div>
+    </div>
+  </div>
+
+  <hr class="div"/>
+
+  <!-- ============= TRADES / CALENDAR ============= -->
+  <h2>Trades</h2>
+  <p style="color:var(--fg-2);font-size:14px">A linked database of every trade. Switch views to see the calendar, gallery of charts, or detailed table.</p>
+
+  <div class="db">
+    <div class="db-tabs">
+      <div class="db-tab cur">📅 Calendar <span class="count">5</span></div>
+      <div class="db-tab">▦ Gallery <span class="count">5</span></div>
+      <div class="db-tab">☰ Table</div>
+      <div class="db-tab">⊟ Board · by Setup</div>
+      <div class="db-actions">
+        <div class="db-btn">⚙ Filter</div>
+        <div class="db-btn">↕ Sort</div>
+        <div class="db-btn">🔍</div>
+        <div class="db-new"><div class="lbl">+ New</div></div>
+      </div>
+    </div>
+
+    <div class="cal-head">
+      <div class="mtitle">May 2026</div>
+      <div class="nav">
+        <button>‹</button>
+        <button>○</button>
+        <button>›</button>
+      </div>
+      <div class="cal-summary">
+        <span>Net: <span class="v red">−$25.39</span></span>
+        <span>Days: <span class="v">1 / 31</span></span>
+        <span>Avg/day: <span class="v red">−$25.39</span></span>
+      </div>
+    </div>
+
+    <div class="cal">
+      <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+
+      <!-- Week 1 -->
+      <div class="day out"><div class="num">26</div></div>
+      <div class="day out"><div class="num">27</div></div>
+      <div class="day out"><div class="num">28</div></div>
+      <div class="day out"><div class="num">29</div></div>
+      <div class="day out"><div class="num">30</div></div>
+      <div class="day"><div class="num">1</div></div>
+      <div class="day"><div class="num">2</div></div>
+
+      <!-- Week 2 -->
+      <div class="day"><div class="num">3</div></div>
+      <div class="day"><div class="num">4</div></div>
+      <div class="day"><div class="num">5</div></div>
+      <div class="day"><div class="num">6</div></div>
+      <div class="day mixed today">
+        <div class="num">7</div>
+        <div class="pnl dn">−$25.39</div>
+        <div class="tag-row">
+          <span class="mini-pill" style="background:var(--purple-bg);color:var(--purple)">SPY</span>
+          <span class="mini-pill" style="background:var(--pink-bg);color:var(--pink)">XAUUSD</span>
+        </div>
+        <div class="meta-line">5 trades · 1W 4L</div>
+      </div>
+      <div class="day"><div class="num">8</div></div>
+      <div class="day"><div class="num">9</div></div>
+
+      <!-- Week 3 -->
+      <div class="day"><div class="num">10</div></div>
+      <div class="day"><div class="num">11</div></div>
+      <div class="day"><div class="num">12</div></div>
+      <div class="day"><div class="num">13</div></div>
+      <div class="day"><div class="num">14</div></div>
+      <div class="day"><div class="num">15</div></div>
+      <div class="day"><div class="num">16</div></div>
+
+      <!-- Week 4 -->
+      <div class="day"><div class="num">17</div></div>
+      <div class="day"><div class="num">18</div></div>
+      <div class="day"><div class="num">19</div></div>
+      <div class="day"><div class="num">20</div></div>
+      <div class="day"><div class="num">21</div></div>
+      <div class="day"><div class="num">22</div></div>
+      <div class="day"><div class="num">23</div></div>
+
+      <!-- Week 5 -->
+      <div class="day"><div class="num">24</div></div>
+      <div class="day"><div class="num">25</div></div>
+      <div class="day"><div class="num">26</div></div>
+      <div class="day"><div class="num">27</div></div>
+      <div class="day"><div class="num">28</div></div>
+      <div class="day"><div class="num">29</div></div>
+      <div class="day"><div class="num">30</div></div>
+
+      <!-- Week 6 -->
+      <div class="day"><div class="num">31</div></div>
+      <div class="day out"><div class="num">1</div></div>
+      <div class="day out"><div class="num">2</div></div>
+      <div class="day out"><div class="num">3</div></div>
+      <div class="day out"><div class="num">4</div></div>
+      <div class="day out"><div class="num">5</div></div>
+      <div class="day out"><div class="num">6</div></div>
+    </div>
+  </div>
+
+  <hr class="div"/>
+
+  <!-- ============= RULES + SETUP ============= -->
+  <div class="grid2">
+    <div class="panel">
+      <h4>🛡️ Risk Rules · Active</h4>
+      <div class="rule"><div class="check on"></div><div class="txt"><b>Honor every stop</b> — no manual closes before stop unless setup invalidates on entry timeframe.</div></div>
+      <div class="rule"><div class="check"></div><div class="txt"><b>Two-Loss Rule</b> — after 2 consecutive losses, session ends. 30 min minimum walk-away.</div></div>
+      <div class="rule"><div class="check"></div><div class="txt"><b>No re-entry into failed zone</b> — when stop hits, that idea is closed for the session.</div></div>
+      <div class="rule"><div class="check"></div><div class="txt"><b>Define before entry</b> — Entry, Stop, Target written down. Can't fill all three? Don't trade.</div></div>
+      <div class="rule"><div class="check"></div><div class="txt"><b>Timeframe consistency</b> — enter on 30m → manage on 30m. 1m forbidden after entry.</div></div>
+    </div>
+
+    <div class="panel">
+      <h4>🎯 Setup Playbook</h4>
+      <div class="setup">
+        <span class="pill purple">Resistance Reject</span>
+        <div class="name" style="flex:1"></div>
+        <div class="bar"><i style="width:100%"></i></div>
+        <div class="stats-mini"><span><b>100%</b> win</span><span style="color:var(--green)"><b>+0.68R</b></span></div>
+      </div>
+      <div class="setup">
+        <span class="pill pink">Buy Box (Forex)</span>
+        <div class="name" style="flex:1"></div>
+        <div class="bar"><i class="red" style="width:0%"></i></div>
+        <div class="stats-mini"><span><b>0%</b> win</span><span style="color:var(--red)"><b>−2.12R</b></span></div>
+      </div>
+      <div class="setup">
+        <span class="pill blue">Pullback</span>
+        <div class="name" style="flex:1"></div>
+        <div class="bar"></div>
+        <div class="stats-mini" style="color:var(--fg-3)"><span>Unused</span></div>
+      </div>
+      <div class="setup">
+        <span class="pill amber">Breakout</span>
+        <div class="name" style="flex:1"></div>
+        <div class="bar"></div>
+        <div class="stats-mini" style="color:var(--fg-3)"><span>Unused</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="div"/>
+
+  <!-- ============= PSYCH + RECENT ============= -->
+  <div class="grid2">
+    <div class="panel">
+      <h4>🧠 Psychology · Session</h4>
+      <p style="color:var(--fg-2);font-size:13px;margin-bottom:8px">Self-rated emotion before / during / after trades.</p>
+      <div style="display:flex;gap:10px;align-items:flex-end;height:80px;padding:8px 0">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--green);width:100%;height:20%;border-radius:3px 3px 0 0"></div><div style="font-size:11px;color:var(--fg-3)">Calm</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--green);width:100%;height:25%;border-radius:3px 3px 0 0"></div><div style="font-size:11px;color:var(--fg-3)">Confident</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--amber);width:100%;height:35%;border-radius:3px 3px 0 0"></div><div style="font-size:11px;color:var(--fg-3)">Anxious</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--red);width:100%;height:80%;border-radius:3px 3px 0 0"></div><div style="font-size:11px;color:var(--fg-3)">Revenge</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--red);width:100%;height:80%;border-radius:3px 3px 0 0"></div><div style="font-size:11px;color:var(--fg-3)">Panic</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--red);width:100%;height:50%;border-radius:3px 3px 0 0"></div><div style="font-size:11px;color:var(--fg-3)">Angry</div></div>
+      </div>
+      <hr class="div" style="margin:14px 0"/>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill green">● Confident (1)</span>
+        <span class="pill amber">● Anxious (1)</span>
+        <span class="pill red">● Revenge (2)</span>
+        <span class="pill red">● Panicked (2)</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h4>📅 Recent Trades</h4>
+      <div class="recent">
+        <div class="item">
+          <div class="date">May 7</div>
+          <div class="tk">SPY</div>
+          <div><span class="pill purple" style="font-size:11px">Resistance Reject</span></div>
+          <div class="r">+0.68R</div>
+          <div class="pn up">+$41.00</div>
+          <div style="color:var(--fg-3);text-align:center">›</div>
+        </div>
+        <div class="item">
+          <div class="date">May 7</div>
+          <div class="tk">XAUUSD</div>
+          <div><span class="pill blue" style="font-size:11px">30m Buy Box</span></div>
+          <div class="r">−1.0R</div>
+          <div class="pn dn">−$9.72</div>
+          <div style="color:var(--fg-3);text-align:center">›</div>
+        </div>
+        <div class="item">
+          <div class="date">May 7</div>
+          <div class="tk">XAUUSD</div>
+          <div><span class="pill red" style="font-size:11px">Re-entry</span></div>
+          <div class="r">−1.4R</div>
+          <div class="pn dn">−$16.14</div>
+          <div style="color:var(--fg-3);text-align:center">›</div>
+        </div>
+        <div class="item">
+          <div class="date">May 7</div>
+          <div class="tk">XAUUSD</div>
+          <div><span class="pill red" style="font-size:11px">Panic entry</span></div>
+          <div class="r">−1.6R</div>
+          <div class="pn dn">−$20.22</div>
+          <div style="color:var(--fg-3);text-align:center">›</div>
+        </div>
+        <div class="item">
+          <div class="date">May 7</div>
+          <div class="tk">XAUUSD</div>
+          <div><span class="pill red" style="font-size:11px">Loss of control</span></div>
+          <div class="r">−1.6R</div>
+          <div class="pn dn">−$20.31</div>
+          <div style="color:var(--fg-3);text-align:center">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="div"/>
+
+  <!-- ============= LESSONS ============= -->
+  <h2>Lessons & Mistakes — May</h2>
+  <div class="callout" style="background:var(--red-bg);border-left:3px solid var(--red)">
+    <div class="em">⚠️</div>
+    <div class="txt"><b>XAUUSD May 7 · −$56.67 across 3 trades.</b> Stop on Trade #1 was hit cleanly — that should have ended the session. Instead re-entered the same broken zone 3 times in 6 minutes. Trades #3 and #4 were entered within 1 second of each other. <b>Fix:</b> When stop is hit, close the chart for 30 minutes minimum. The setup is dead for the session.</div>
+  </div>
+  <div class="callout" style="background:var(--amber-bg);border-left:3px solid var(--amber)">
+    <div class="em">📝</div>
+    <div class="txt"><b>SPY Puts May 7 · Captured only 25% of move.</b> Setup was correct (algo + fib + H&S confluence) but exited at +$41 when the move gave $150–200. Fear of profit give-back overrode the system. <b>Fix:</b> Define target before entry. Hold to target unless system signals flip — not because it "feels" like time to exit.</div>
+  </div>
+  <div class="callout" style="background:var(--green-bg);border-left:3px solid var(--green)">
+    <div class="em">✅</div>
+    <div class="txt"><b>XAUUSD #1 was a good trade that lost.</b> Stop placed at 4712, hit with normal slippage to 4711.80, exited correctly. Plan followed. This is exactly how a planned loss is supposed to look. The mistake was everything that came after.</div>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.check').forEach(c=>{
+    c.addEventListener('click', e=>{
+      e.stopPropagation();
+      c.classList.toggle('on');
+    });
+  });
+  document.querySelectorAll('.db-tab').forEach((t,_,arr)=>{
+    t.addEventListener('click',()=>{
+      arr.forEach(x=>x.classList.remove('cur'));
+      t.classList.add('cur');
+    });
+  });
+</script>
+</body>
+</html>
